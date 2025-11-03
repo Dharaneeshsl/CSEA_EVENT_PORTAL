@@ -1,0 +1,8 @@
+# Ignore environment variable files
+.env
+.env.local
+# Ignore any env files with local or per-environment suffixes
+.env.*.local
+
+# Node modules (common to backend projects)
+node_modules/
