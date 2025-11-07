@@ -23,5 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 
+node_modules/
+*.mp4
+
 frontend/node_modules/
 frontend/web-portal/node_modules/
