@@ -24,7 +24,9 @@ dist-ssr
 *.sw?
 
 node_modules/
+# Allow specific video files needed for the app
 *.mp4
+!frontend/web-portal/src/assets/*.mp4
 
 frontend/node_modules/
 frontend/web-portal/node_modules/
