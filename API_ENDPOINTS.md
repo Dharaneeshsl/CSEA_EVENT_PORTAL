@@ -66,7 +66,7 @@ POST /api/v1/roundone/questions/qn-ans
 }
 
 ```
-## Sucess body 
+## Success Message
 ```json
 {
   "success": true,
@@ -84,7 +84,7 @@ POST /api/v1/roundone/questions/qn-ans
 
 
 ```
-## Error  
+## Error 
 ```json
 {
   "success": false,
@@ -109,7 +109,7 @@ POST /api/v1/roundone/questions/steg
 
 
 ```
-## Sucess body 
+## Success Message
 ```json
 {
   "success": true,
@@ -134,9 +134,13 @@ POST /api/v1/roundone/questions/steg
 ```
 ---
 
+POST /api/v1/roundone/questions/crossword - to be updated
+
+---
+
 GET /api/v1/roundone/questions/all?year=1/2
 
-## Sucess body 
+## Success body 
 ```json
 {
   "success": true,
@@ -177,7 +181,7 @@ GET /api/v1/roundone/questions/all?year=1/2
 
 GET /api/v1/roundone/questions/:id 
 
-## Sucess body 
+## Success Message
 ```json
 {
   "success": true,
@@ -211,7 +215,7 @@ PUT /api/v1/roundone/questions/:type/:id
 }
 ```
 
-## Sucess body 
+## Success Message
 ```json
 {
   "success": true,
@@ -237,7 +241,7 @@ PUT /api/v1/roundone/questions/:type/:id
 
 DELETE /api/v1/roundone/questions/:type/:id 
 
-## Sucess body 
+## Success body 
 ```json
 {
   "success": true,
