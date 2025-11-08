@@ -10,7 +10,7 @@ const RoundThree = ({ fragments = [] }) => {
   // In a real implementation, this would be encrypted/encoded
   const correctPassword = fragments.length > 0 
     ? fragments.join('').toUpperCase() 
-    : 'SEAL'; // Fallback password for testing if no fragments
+    : 'UPSIDE DOWN'; // Fallback password for testing if no fragments
 
   useEffect(() => {
     // If fragments are passed, they're already available
@@ -37,7 +37,7 @@ const RoundThree = ({ fragments = [] }) => {
     const userPassword = finalPassword.trim().toUpperCase();
     const expected = correctPassword.toUpperCase();
 
-    if (userPassword === expected || userPassword === 'SEAL') {
+    if (userPassword === expected || userPassword === 'UPSIDE DOWN') {
       setIsComplete(true);
       setError('');
       

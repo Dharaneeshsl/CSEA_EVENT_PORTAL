@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import './App.css'
 import RoundOne from './components/RoundOne'
 import RoundTwo from './components/RoundTwo'
-import RoundThree from './components/RoundThree'
 import Login from './components/Login'
 // import StrangerThingsIntro from './components/StrangerThingsIntro' // Disabled - using video intro instead
 import VideoIntro from './components/VideoIntro'
@@ -33,6 +32,15 @@ function App() {
         setFragments(JSON.parse(savedFragments));
       }
       
+      // Load saved round progress if user is logged in
+      const savedRound = localStorage.getItem('currentRound');
+      if (savedRound && saved) {
+        const roundNum = parseInt(savedRound, 10);
+        if (roundNum >= 1 && roundNum <= 2) {
+          setCurrentRound(roundNum);
+        }
+      }
+      
       // Check if intro has been played before
       const introPlayed = localStorage.getItem('introPlayed');
       if (!introPlayed) {
@@ -60,6 +68,17 @@ function App() {
       }
     }
   }, [fragments]);
+
+  // Save current round to localStorage whenever it changes (only when logged in)
+  useEffect(() => {
+    if (loggedInYear) {
+      try {
+        localStorage.setItem('currentRound', currentRound.toString());
+      } catch (e) {
+        // ignore
+      }
+    }
+  }, [currentRound, loggedInYear]);
 
   // Debug: confirm component renders in the browser console
   console.log('App mounted, currentRound=', currentRound);
@@ -125,6 +144,7 @@ function App() {
             case 1:
               return <RoundOne onComplete={() => {
                 setCurrentRound(2);
+                // Round One completion is saved automatically via the useEffect above
               }} />;
             case 2:
               return <RoundTwo 
@@ -132,11 +152,17 @@ function App() {
                 fragments={fragments}
                 setFragments={setFragments}
                 onComplete={() => {
-                  setCurrentRound(3);
+                  // Round 2 completion triggers JoyceWall
+                  // JoyceWall shows jumbled message → finale video → password input (Round 3)
+                  // When JoyceWall video completes, the entire game is finished
+                  // Mark game as complete in localStorage
+                  try {
+                    localStorage.setItem('gameComplete', 'true');
+                  } catch (e) {
+                    // ignore
+                  }
                 }} 
               />;
-            case 3:
-              return <RoundThree fragments={fragments} />;
             default:
               return <RoundOne />;
           }

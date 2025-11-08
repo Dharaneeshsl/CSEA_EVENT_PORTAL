@@ -1,14 +1,19 @@
 import React, { useState, useEffect } from 'react';
+import JoyceWall from './JoyceWall';
+import { wordList } from './wordList';
 
 const RoundTwo = ({ loggedInYear, fragments: parentFragments = [], setFragments, onComplete }) => {
   const [currentPuzzle, setCurrentPuzzle] = useState(0);
   const [code, setCode] = useState('');
-  const [testResults, setTestResults] = useState({ visible: [], hiddenPassed: 0, ran: false, details: [] });
+  const [testResults, setTestResults] = useState({ visible: [], hiddenPassed: 0, hiddenDetails: [], ran: false, details: [] });
   const [runOutput, setRunOutput] = useState('');
+  const [compilerError, setCompilerError] = useState('');
   const [isRunning, setIsRunning] = useState(false);
   const [fragments, setFragmentsLocal] = useState(parentFragments);
   const [error, setError] = useState('');
   const [puzzleCompleted, setPuzzleCompleted] = useState(new Set());
+  const [showJoyceWall, setShowJoyceWall] = useState(false);
+  const [triggerWord, setTriggerWord] = useState('');
 
   // Sync with parent fragments
   useEffect(() => {
@@ -72,6 +77,46 @@ const RoundTwo = ({ loggedInYear, fragments: parentFragments = [], setFragments,
     return result`,
       hint: "Check the string concatenation order to reverse",
       fragment: "FRAGMENT3"
+    },
+    {
+      id: 4,
+      language: "Python",
+      code: `def is_prime(n):
+    if n < 2:
+        return False
+    for i in range(2, n):
+        if n % i == 0:
+            return True
+    return False`,
+      fixedCode: `def is_prime(n):
+    if n < 2:
+        return False
+    for i in range(2, n):
+        if n % i == 0:
+            return False
+    return True`,
+      hint: "Check the return values - they are swapped",
+      fragment: "FRAGMENT4"
+    },
+    {
+      id: 5,
+      language: "Python",
+      code: `def factorial(n):
+    if n == 0:
+        return 0
+    result = 1
+    for i in range(1, n):
+        result *= i
+    return result`,
+      fixedCode: `def factorial(n):
+    if n == 0:
+        return 1
+    result = 1
+    for i in range(1, n + 1):
+        result *= i
+    return result`,
+      hint: "Check the base case and the range for the loop",
+      fragment: "FRAGMENT5"
     }
   ];
 
@@ -142,6 +187,48 @@ const RoundTwo = ({ loggedInYear, fragments: parentFragments = [], setFragments,
 }`,
       hint: "Check the for loop syntax carefully",
       fragment: "FRAGMENT3"
+    },
+    {
+      id: 4,
+      language: "C",
+      code: `int find_min(int arr[], int n) {
+    int min = arr[0];
+    for(int i = 0; i < n; i++) {
+        if(arr[i] < min) {
+            min = arr[i];
+        }
+    }
+    return min;
+}`,
+      fixedCode: `int find_min(int arr[], int n) {
+    int min = arr[0];
+    for(int i = 1; i < n; i++) {
+        if(arr[i] < min) {
+            min = arr[i];
+        }
+    }
+    return min;
+}`,
+      hint: "Check the loop starting index - should start from 1",
+      fragment: "FRAGMENT4"
+    },
+    {
+      id: 5,
+      language: "C",
+      code: `int is_even(int num) {
+    if(num % 2 = 0) {
+        return 1;
+    }
+    return 0;
+}`,
+      fixedCode: `int is_even(int num) {
+    if(num % 2 == 0) {
+        return 1;
+    }
+    return 0;
+}`,
+      hint: "Check the comparison operator in the if condition",
+      fragment: "FRAGMENT5"
     }
   ];
 
@@ -173,7 +260,8 @@ const RoundTwo = ({ loggedInYear, fragments: parentFragments = [], setFragments,
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setTestResults({ visible: [], hiddenPassed: 0, ran: false, details: [] });
+    setCompilerError('');
+    setTestResults({ visible: [], hiddenPassed: 0, hiddenDetails: [], ran: false, details: [] });
     setRunOutput('');
     setIsRunning(true);
 
@@ -200,9 +288,13 @@ const RoundTwo = ({ loggedInYear, fragments: parentFragments = [], setFragments,
       if (currentPuzzleData.fixedCode.includes('def find_portal')) return 'find_portal';
       if (currentPuzzleData.fixedCode.includes('def count_dimensions')) return 'count_dimensions';
       if (currentPuzzleData.fixedCode.includes('def reverse_string')) return 'reverse_string';
+      if (currentPuzzleData.fixedCode.includes('def is_prime')) return 'is_prime';
+      if (currentPuzzleData.fixedCode.includes('def factorial')) return 'factorial';
       if (currentPuzzleData.fixedCode.includes('int count_dimensions')) return 'count_dimensions';
       if (currentPuzzleData.fixedCode.includes('int find_max')) return 'find_max';
       if (currentPuzzleData.fixedCode.includes('int sum_array')) return 'sum_array';
+      if (currentPuzzleData.fixedCode.includes('int find_min')) return 'find_min';
+      if (currentPuzzleData.fixedCode.includes('int is_even')) return 'is_even';
       return '';
     })();
 
@@ -231,6 +323,12 @@ const RoundTwo = ({ loggedInYear, fragments: parentFragments = [], setFragments,
         if (currentPuzzleData.fixedCode.includes('def reverse_string')) {
           return `${code}\n\nimport json\n\nresults=[]\ncases=[]\ntry:\n    exp1=True\n    act1=bool(callable(reverse_string))\n    results.append(act1==exp1)\n    cases.append({'expected':str(exp1),'actual':str(act1),'passed':bool(act1==exp1)})\n\n    exp2='cba'\n    act2=reverse_string('abc')\n    results.append(act2==exp2)\n    cases.append({'expected':exp2,'actual':act2,'passed':bool(act2==exp2)})\n\n    exp3=''\n    act3=reverse_string('')\n    results.append(act3==exp3)\n    cases.append({'expected':exp3,'actual':act3,'passed':bool(act3==exp3)})\n\n    exp4='a'\n    act4=reverse_string('a')\n    results.append(act4==exp4)\n    cases.append({'expected':exp4,'actual':act4,'passed':bool(act4==exp4)})\n\n    exp5='ts'\n    act5=reverse_string('st')\n    results.append(act5==exp5)\n    cases.append({'expected':exp5,'actual':act5,'passed':bool(act5==exp5)})\n\n    hidden=0\n    hidden += 1 if reverse_string('hello')=='olleh' else 0\n    hidden += 1 if reverse_string('racecar')=='racecar' else 0\n    hidden += 1 if reverse_string('Python')=='nohtyP' else 0\n    hidden += 1 if reverse_string('12')=='21' else 0\n    hidden += 1 if isinstance(reverse_string('x'), str) else 0\nexcept Exception as e:\n    print('ERROR:', e)\n    results=[False,False,False,False,False]\n    cases=[{'expected':'True','actual':'Exception','passed':False}]+[{'expected':'','actual':'','passed':False} for _ in range(4)]\n    hidden=0\nprint(json.dumps({'visible':results,'hidden':hidden,'cases':cases}))`;
         }
+        if (currentPuzzleData.fixedCode.includes('def is_prime')) {
+          return `${code}\n\nimport json\n\nresults=[]\ncases=[]\ntry:\n    exp1=True\n    act1=bool(callable(is_prime))\n    results.append(act1==exp1)\n    cases.append({'expected':str(exp1),'actual':str(act1),'passed':bool(act1==exp1)})\n\n    exp2=True\n    act2=is_prime(7)\n    results.append(act2==exp2)\n    cases.append({'expected':str(exp2),'actual':str(act2),'passed':bool(act2==exp2)})\n\n    exp3=False\n    act3=is_prime(4)\n    results.append(act3==exp3)\n    cases.append({'expected':str(exp3),'actual':str(act3),'passed':bool(act3==exp3)})\n\n    exp4=False\n    act4=is_prime(1)\n    results.append(act4==exp4)\n    cases.append({'expected':str(exp4),'actual':str(act4),'passed':bool(act4==exp4)})\n\n    exp5=True\n    act5=is_prime(2)\n    results.append(act5==exp5)\n    cases.append({'expected':str(exp5),'actual':str(act5),'passed':bool(act5==exp5)})\n\n    hidden=0\n    hidden += 1 if is_prime(11)==True else 0\n    hidden += 1 if is_prime(15)==False else 0\n    hidden += 1 if is_prime(17)==True else 0\n    hidden += 1 if is_prime(0)==False else 0\n    hidden += 1 if isinstance(is_prime(5), bool) else 0\nexcept Exception as e:\n    print('ERROR:', e)\n    results=[False,False,False,False,False]\n    cases=[{'expected':'True','actual':'Exception','passed':False}]+[{'expected':'','actual':'','passed':False} for _ in range(4)]\n    hidden=0\nprint(json.dumps({'visible':results,'hidden':hidden,'cases':cases}))`;
+        }
+        if (currentPuzzleData.fixedCode.includes('def factorial')) {
+          return `${code}\n\nimport json\n\nresults=[]\ncases=[]\ntry:\n    exp1=True\n    act1=bool(callable(factorial))\n    results.append(act1==exp1)\n    cases.append({'expected':str(exp1),'actual':str(act1),'passed':bool(act1==exp1)})\n\n    exp2=120\n    act2=factorial(5)\n    results.append(act2==exp2)\n    cases.append({'expected':str(exp2),'actual':str(act2),'passed':bool(act2==exp2)})\n\n    exp3=1\n    act3=factorial(0)\n    results.append(act3==exp3)\n    cases.append({'expected':str(exp3),'actual':str(act3),'passed':bool(act3==exp3)})\n\n    exp4=1\n    act4=factorial(1)\n    results.append(act4==exp4)\n    cases.append({'expected':str(exp4),'actual':str(act4),'passed':bool(act4==exp4)})\n\n    exp5=24\n    act5=factorial(4)\n    results.append(act5==exp5)\n    cases.append({'expected':str(exp5),'actual':str(act5),'passed':bool(act5==exp5)})\n\n    hidden=0\n    hidden += 1 if factorial(3)==6 else 0\n    hidden += 1 if factorial(6)==720 else 0\n    hidden += 1 if factorial(2)==2 else 0\n    hidden += 1 if factorial(7)==5040 else 0\n    hidden += 1 if isinstance(factorial(4), int) else 0\nexcept Exception as e:\n    print('ERROR:', e)\n    results=[False,False,False,False,False]\n    cases=[{'expected':'True','actual':'Exception','passed':False}]+[{'expected':'','actual':'','passed':False} for _ in range(4)]\n    hidden=0\nprint(json.dumps({'visible':results,'hidden':hidden,'cases':cases}))`;
+        }
         return code;
       };
 
@@ -245,6 +343,12 @@ const RoundTwo = ({ loggedInYear, fragments: parentFragments = [], setFragments,
         }
         if (currentPuzzleData.fixedCode.includes('int sum_array')) {
           return `${header}${code}\n\nint main(){\n  bool v1=true;\n  int a1[]={1,2,3}; int e2=6; int o2=sum_array(a1,3); bool v2 = o2==e2;\n  int a2[]={}; int e3=0; int o3=sum_array(a2,0); bool v3 = o3==e3;\n  int a3[]={-1,1}; int e4=0; int o4=sum_array(a3,2); bool v4 = o4==e4;\n  int a4[]={5}; int e5=5; int o5=sum_array(a4,1); bool v5 = o5==e5;\n  int h=0; int a5[]={10,10}; h += sum_array(a5,2)==20;\n  int a6[]={-5,-5}; h += sum_array(a6,2)==-10;\n  int a7[]={100}; h += sum_array(a7,1)==100;\n  int a8[]={1,1,1,1,1}; h += sum_array(a8,5)==5;\n  int a9[]={3,4}; h += sum_array(a9,2)==7;\n  printf("VIS:%d %d %d %d %d\\n", v1, v2, v3, v4, v5);\n  printf("CASE:1 EXP:%d OUT:%d OK:%d\\n", 1, 1, v1?1:0);\n  printf("CASE:2 EXP:%d OUT:%d OK:%d\\n", e2, o2, v2?1:0);\n  printf("CASE:3 EXP:%d OUT:%d OK:%d\\n", e3, o3, v3?1:0);\n  printf("CASE:4 EXP:%d OUT:%d OK:%d\\n", e4, o4, v4?1:0);\n  printf("CASE:5 EXP:%d OUT:%d OK:%d\\n", e5, o5, v5?1:0);\n  printf("HID:%d\\n", h);\n  return 0;\n}`;
+        }
+        if (currentPuzzleData.fixedCode.includes('int find_min')) {
+          return `${header}${code}\n\nint main(){\n  bool v1=true;\n  int a1[]={5,2,8}; int e2=2; int o2=find_min(a1,3); bool v2 = o2==e2;\n  int a2[]={-5,-2,-9}; int e3=-9; int o3=find_min(a2,3); bool v3 = o3==e3;\n  int a3[]={7}; int e4=7; int o4=find_min(a3,1); bool v4 = o4==e4;\n  int a4[]={3,3,3}; int e5=3; int o5=find_min(a4,3); bool v5 = o5==e5;\n  int h=0; int a5[]={0,-1}; h += find_min(a5,2)==-1;\n  int a6[]={100,50,200}; h += find_min(a6,3)==50;\n  int a7[]={-3,-1,-2}; h += find_min(a7,3)==-3;\n  int a8[]={9,8,10,7}; h += find_min(a8,4)==7;\n  int a9[]={42}; h += find_min(a9,1)==42;\n  printf("VIS:%d %d %d %d %d\\n", v1, v2, v3, v4, v5);\n  printf("CASE:1 EXP:%d OUT:%d OK:%d\\n", 1, 1, v1?1:0);\n  printf("CASE:2 EXP:%d OUT:%d OK:%d\\n", e2, o2, v2?1:0);\n  printf("CASE:3 EXP:%d OUT:%d OK:%d\\n", e3, o3, v3?1:0);\n  printf("CASE:4 EXP:%d OUT:%d OK:%d\\n", e4, o4, v4?1:0);\n  printf("CASE:5 EXP:%d OUT:%d OK:%d\\n", e5, o5, v5?1:0);\n  printf("HID:%d\\n", h);\n  return 0;\n}`;
+        }
+        if (currentPuzzleData.fixedCode.includes('int is_even')) {
+          return `${header}${code}\n\nint main(){\n  bool v1=true;\n  int e2=1; int o2=is_even(4); bool v2 = o2==e2;\n  int e3=0; int o3=is_even(5); bool v3 = o3==e3;\n  int e4=1; int o4=is_even(0); bool v4 = o4==e4;\n  int e5=0; int o5=is_even(7); bool v5 = o5==e5;\n  int h=0; h += is_even(2)==1;\n  h += is_even(10)==1;\n  h += is_even(3)==0;\n  h += is_even(1)==0;\n  h += (is_even(6)==1 || is_even(6)==0);\n  printf("VIS:%d %d %d %d %d\\n", v1, v2, v3, v4, v5);\n  printf("CASE:1 EXP:%d OUT:%d OK:%d\\n", 1, 1, v1?1:0);\n  printf("CASE:2 EXP:%d OUT:%d OK:%d\\n", e2, o2, v2?1:0);\n  printf("CASE:3 EXP:%d OUT:%d OK:%d\\n", e3, o3, v3?1:0);\n  printf("CASE:4 EXP:%d OUT:%d OK:%d\\n", e4, o4, v4?1:0);\n  printf("CASE:5 EXP:%d OUT:%d OK:%d\\n", e5, o5, v5?1:0);\n  printf("HID:%d\\n", h);\n  return 0;\n}`;
         }
         return `${header}${code}\nint main(){printf("VIS:0 0 0 0 0\\nHID:0\\n");return 0;}`;
       };
@@ -262,11 +366,24 @@ const RoundTwo = ({ loggedInYear, fragments: parentFragments = [], setFragments,
       const data = await resp.json();
       const stdout = (data?.run?.stdout || '').trim();
       const stderr = (data?.run?.stderr || '').trim();
+      const compileOutput = (data?.compile?.stderr || data?.compile?.stdout || '').trim();
       setRunOutput(stdout + (stderr ? ('\n' + stderr) : ''));
+      
+      // Set compiler error if compilation failed
+      if (compileOutput && (data?.compile?.code !== 0 || compileOutput.includes('error'))) {
+        setCompilerError(compileOutput || stderr);
+      } else if (stderr && !stdout.includes('VIS:') && !stdout.includes('{')) {
+        // If there's stderr and no expected output format, it's likely a runtime/compile error
+        setCompilerError(stderr);
+      } else {
+        setCompilerError('');
+      }
 
       let visible = [false, false, false, false, false];
       let hiddenPassed = 0;
+      let hiddenDetails = [];
       let details = [];
+      
       if (isPy) {
         // Python prints JSON on stdout last line
         try {
@@ -274,17 +391,29 @@ const RoundTwo = ({ loggedInYear, fragments: parentFragments = [], setFragments,
           const parsed = JSON.parse(lastLine);
           visible = Array.isArray(parsed.visible) ? parsed.visible : visible;
           hiddenPassed = Number(parsed.hidden) || 0;
+          
+          // Parse visible test cases
           if (Array.isArray(parsed.cases)) {
-            const labels = ['Function exists', 'Basic input case', 'Edge case 1', 'Edge case 2', 'Edge case 3'];
+            const labels = ['Testcase 1', 'Testcase 2', 'Testcase 3', 'Testcase 4', 'Testcase 5'];
             details = parsed.cases.map((c, i) => ({
-              name: labels[i] || `Case ${i+1}`,
+              name: labels[i] || `Testcase ${i+1}`,
               expected: String(c.expected ?? ''),
               actual: String(c.actual ?? ''),
               passed: Boolean(c.passed)
             }));
           }
+          
+          // Generate hidden test case details (5 hidden tests)
+          const totalHidden = 5;
+          hiddenDetails = Array.from({ length: totalHidden }, (_, i) => ({
+            name: `Hidden Testcase ${i + 1}`,
+            passed: i < hiddenPassed
+          }));
         } catch (e) {
-          setError('Could not parse program output.');
+          // If parsing fails, check if it's a syntax error
+          if (stderr || compileOutput) {
+            setCompilerError(stderr || compileOutput || 'Could not parse program output.');
+          }
         }
       } else {
         // C prints VIS: and HID: lines
@@ -297,100 +426,141 @@ const RoundTwo = ({ loggedInYear, fragments: parentFragments = [], setFragments,
         hiddenPassed = parseInt(hidLine, 10) || 0;
 
         // Parse detailed CASE lines: CASE:i EXP:x OUT:y OK:0/1
-        const labels = ['Function exists', 'Basic input case', 'Edge case 1', 'Edge case 2', 'Edge case 3'];
+        const labels = ['Testcase 1', 'Testcase 2', 'Testcase 3', 'Testcase 4', 'Testcase 5'];
         details = stdout.split('\n').filter(l => l.startsWith('CASE:')).map((line) => {
           const m = line.match(/CASE:(\d+)\s+EXP:([^\s]+)\s+OUT:([^\s]+)\s+OK:(\d+)/);
           const idx = m ? parseInt(m[1], 10) - 1 : 0;
           return {
-            name: labels[idx] || `Case ${idx+1}`,
+            name: labels[idx] || `Testcase ${idx+1}`,
             expected: m ? m[2] : '',
             actual: m ? m[3] : '',
             passed: m ? m[4] === '1' : false
           };
         });
+        
+        // Generate hidden test case details (5 hidden tests)
+        const totalHidden = 5;
+        hiddenDetails = Array.from({ length: totalHidden }, (_, i) => ({
+          name: `Hidden Testcase ${i + 1}`,
+          passed: i < hiddenPassed
+        }));
       }
 
-      setTestResults({ visible, hiddenPassed, ran: true, details });
+      setTestResults({ visible, hiddenPassed, hiddenDetails, ran: true, details });
+      setIsRunning(false);
+      
       const allPassed = visible.every(Boolean) && hiddenPassed === 5;
-      if (!allPassed) {
-        setError(stderr ? ('Runtime error: ' + stderr) : 'Some tests failed. Fix issues and try again.');
+      
+      // Check if code matches fixed code (exact match)
+      if (userCode === fixedCode && allPassed) {
+        // Add fragment if not already collected
+        if (!fragments.includes(currentPuzzleData.fragment)) {
+          const newFragments = [...fragments, currentPuzzleData.fragment];
+          setFragmentsLocal(newFragments);
+          // Update parent state if setFragments is provided
+          if (setFragments) {
+            setFragments(newFragments);
+          }
+        }
+
+        const newCompleted = new Set(puzzleCompleted);
+        newCompleted.add(currentPuzzle);
+        setPuzzleCompleted(newCompleted);
+        
+        setError('Correct! All tests passed. Fragment collected.');
+        setTimeout(() => setError(''), 1200);
+        setCode('');
+
+        // Auto-advance to the next incomplete puzzle
+        // Joyce Wall will be triggered via useEffect when all puzzles are completed
+        const nextIdx = getNextIncompleteIndex(currentPuzzle + 1);
+        if (nextIdx !== -1) {
+          setCurrentPuzzle(nextIdx);
+        }
+      } else if (!allPassed && !compilerError) {
+        setError('Some tests failed. Fix issues and try again.');
       }
     } catch (ex) {
       console.error(ex);
       setError('Execution service error. Please try again.');
-    }
-
-    if (userCode === fixedCode) {
-      // Add fragment if not already collected
-      if (!fragments.includes(currentPuzzleData.fragment)) {
-        const newFragments = [...fragments, currentPuzzleData.fragment];
-        setFragmentsLocal(newFragments);
-        // Update parent state if setFragments is provided
-        if (setFragments) {
-          setFragments(newFragments);
-        }
-      }
-
-      const newCompleted = new Set(puzzleCompleted);
-      newCompleted.add(currentPuzzle);
-      setPuzzleCompleted(newCompleted);
-      
-      setError('Correct! All tests passed. Fragment collected.');
-      setTestResults((prev) => ({ visible: prev.ran ? prev.visible : visibleTests.map(() => true), hiddenPassed: prev.ran ? prev.hiddenPassed : 5, ran: true }));
-      setTimeout(() => setError(''), 1200);
-      setCode('');
       setIsRunning(false);
-
-      // Auto-advance to the next incomplete puzzle or finish round
-      const nextIdx = getNextIncompleteIndex(currentPuzzle + 1);
-      if (newCompleted.size === puzzles.length) {
-        if (onComplete) onComplete();
-      } else if (nextIdx !== -1) {
-        setCurrentPuzzle(nextIdx);
-      }
-    } else {
-      // Partial heuristic results (without executing code)
-      const passedCount = visiblePass.filter(Boolean).length;
-      setTestResults({ visible: visiblePass, hiddenPassed: Math.max(0, Math.min(2, passedCount - 2)), ran: true });
-      setError('Some tests failed. Fix issues and try again.');
-      setIsRunning(false);
+      setCompilerError('Failed to execute code. Please check your connection and try again.');
     }
   };
 
   const nextPuzzle = () => {
-    const idx = getNextIncompleteIndex(currentPuzzle + 1);
-    if (idx !== -1) {
-      setCurrentPuzzle(idx);
+    // Find next uncompleted puzzle
+    const nextIdx = getNextIncompleteIndex(currentPuzzle + 1);
+    if (nextIdx !== -1) {
+      setCurrentPuzzle(nextIdx);
       setCode('');
       setError('');
-    } else if (puzzleCompleted.size === puzzles.length) {
-      if (onComplete) onComplete();
+      setCompilerError('');
+      setTestResults({ visible: [], hiddenPassed: 0, hiddenDetails: [], ran: false, details: [] });
     }
   };
 
   const prevPuzzle = () => {
-    const idx = getPrevIncompleteIndex(currentPuzzle - 1);
-    if (idx !== -1) {
-      setCurrentPuzzle(idx);
+    // Find previous uncompleted puzzle
+    const prevIdx = getPrevIncompleteIndex(currentPuzzle - 1);
+    if (prevIdx !== -1) {
+      setCurrentPuzzle(prevIdx);
       setCode('');
       setError('');
+      setCompilerError('');
+      setTestResults({ visible: [], hiddenPassed: 0, hiddenDetails: [], ran: false, details: [] });
     }
   };
+  
+  // Check if there are uncompleted puzzles ahead
+  const hasNextUncompleted = getNextIncompleteIndex(currentPuzzle + 1) !== -1;
+  
+  // Check if there are uncompleted puzzles behind
+  const hasPrevUncompleted = getPrevIncompleteIndex(currentPuzzle - 1) !== -1;
 
   const allPuzzlesCompleted = puzzleCompleted.size === puzzles.length;
 
-  // If current puzzle gets completed (via back/refresh), skip to next incomplete
+  // Trigger Joyce Wall when all puzzles are completed
   useEffect(() => {
-    if (puzzleCompleted.has(currentPuzzle)) {
-      const idx = getNextIncompleteIndex(0);
-      if (idx !== -1) {
-        setCurrentPuzzle(idx);
-      } else if (puzzleCompleted.size === puzzles.length) {
-        if (onComplete) onComplete();
-      }
+    if (allPuzzlesCompleted && !showJoyceWall && puzzleCompleted.size === puzzles.length) {
+      // Small delay to ensure UI is ready
+      setTimeout(() => {
+        // Pick a random word and jumble it
+        const word = wordList[Math.floor(Math.random() * wordList.length)];
+        const jumbled = word.split('').sort(() => Math.random() - 0.5).join('');
+        setTriggerWord(jumbled);
+        setShowJoyceWall(true);
+      }, 500);
+    }
+  }, [allPuzzlesCompleted, showJoyceWall, puzzleCompleted.size, puzzles.length]);
+
+  // Ensure we start with the first uncompleted puzzle on mount
+  useEffect(() => {
+    const firstIncomplete = getNextIncompleteIndex(0);
+    if (firstIncomplete !== -1 && firstIncomplete !== currentPuzzle && puzzleCompleted.size === 0) {
+      setCurrentPuzzle(firstIncomplete);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [puzzleCompleted]);
+  }, []);
+
+  // Handle Joyce Wall completion
+  const handleJoyceWallComplete = () => {
+    setShowJoyceWall(false);
+    if (onComplete) {
+      onComplete();
+    }
+  };
+
+  // Show Joyce Wall if all puzzles completed
+  if (showJoyceWall) {
+    return (
+      <JoyceWall 
+        triggerWord={triggerWord} 
+        onComplete={handleJoyceWallComplete}
+        fragments={fragments}
+      />
+    );
+  }
 
   return (
     <div className="round-two-fixed" style={{ position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column', background: '#000', overflow: 'hidden' }}>
@@ -400,9 +570,14 @@ const RoundTwo = ({ loggedInYear, fragments: parentFragments = [], setFragments,
         <h2 className="round-title" style={{ margin: 0, textAlign: 'center', letterSpacing: '2px' }}>ROUND 2: THE GLITCH BETWEEN WORLDS</h2>
         <div style={{ justifySelf: 'end', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'rgba(255,255,255,0.8)' }} />
         {/* Top-left absolute navigation buttons */}
-        <div style={{ position: 'absolute', top: 8, left: 12, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <button onClick={prevPuzzle} disabled={currentPuzzle === 0} className="nav-button-small">← Prev</button>
-          <button onClick={nextPuzzle} disabled={currentPuzzle === puzzles.length - 1} className="nav-button-small">Next →</button>
+        <div style={{ position: 'absolute', top: 8, left: 12, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <button onClick={prevPuzzle} disabled={!hasPrevUncompleted} className="nav-button-small">← PREV</button>
+            <button onClick={nextPuzzle} disabled={!hasNextUncompleted} className="nav-button-small">NEXT →</button>
+          </div>
+          <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            PUZZLE {currentPuzzle + 1} OF {puzzles.length} ({puzzleCompleted.size} COMPLETED)
+          </span>
         </div>
       </div>
 
@@ -433,59 +608,128 @@ const RoundTwo = ({ loggedInYear, fragments: parentFragments = [], setFragments,
           </div>
         </div>
 
-        {/* Right: Tests & Fragments */}
+        {/* Right: Tests */}
         <div className="tests-pane" style={{ width: '50%', height: '100%', display: 'flex', flexDirection: 'column', boxSizing: 'border-box', gap: '0.75rem', overflow: 'hidden', paddingLeft: '0.5rem', borderLeft: '2px solid rgba(230,25,75,0.25)' }}>
-          <div className="panel" style={{ padding: '0.85rem 1rem' }}>
-            <h3 className="panel-title" style={{ margin: 0 }}>Test Cases</h3>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-              {['Function exists', 'Basic input case', 'Edge case 1', 'Edge case 2', 'Edge case 3'].map((label, idx) => {
-                const info = (testResults.details && testResults.details[idx]) || null;
-                const passed = testResults.visible[idx];
-                return (
-                  <li key={label} className="test-item-card">
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
-                      <span>{label}</span>
-                      <span className="test-status">
-                        {testResults.ran && <span className={`status-dot ${passed ? 'status-pass' : 'status-fail'}`} />}
-                        {testResults.ran ? (passed ? 'PASSED' : 'FAILED') : '—'}
-                      </span>
-                    </div>
-                    {testResults.ran && info && (
-                      <div style={{ marginTop: '0.35rem', fontSize: '0.9rem', color: 'rgba(255,255,255,0.85)', display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: '1rem' }}>
-                        <div><strong style={{ opacity: 0.85 }}>Expected:</strong> <span style={{ opacity: 0.9 }}>{info.expected}</span></div>
-                        <div><strong style={{ opacity: 0.85 }}>Output:</strong> <span style={{ opacity: 0.9 }}>{info.actual}</span></div>
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-            <div style={{ marginTop: '0.75rem', color: 'rgba(255,255,255,0.8)' }}>
-              Hidden tests passed: {testResults.ran ? testResults.hiddenPassed : 0} / 5
-            </div>
-          </div>
-
-          <div className="panel hover-glow" style={{ padding: '0.85rem 1rem', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-            <h3 className="panel-title" style={{ margin: 0 }}>Fragments</h3>
-            <div className="fragments-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '0.5rem', overflow: 'auto', flex: 1, paddingBottom: '0.5rem' }}>
-            {fragments.length === 0 ? (
-              <div style={{ opacity: 0.7 }}>No fragments collected yet.</div>
-            ) : (
-              fragments.map((fragment, index) => (
-                <div key={index} className="fragment-card hover-glow">
-                  <div className="fragment-number">Fragment {index + 1}</div>
-                  <div className="fragment-value">{fragment}</div>
-                </div>
-              ))
-            )}
-            </div>
-
-          {allPuzzlesCompleted && fragments.length > 0 && (
-            <div className="completion-note" style={{ flex: '0 0 auto' }}>
-              <p>✓ All challenges complete! You now have {fragments.length} fragment(s).</p>
-              <p>Use these fragments in Round 3 to seal the gate!</p>
+          {/* Compiler Message Section */}
+          {compilerError && (
+            <div className="panel compiler-message-panel" style={{ padding: '0.85rem 1rem', flex: '0 0 auto' }}>
+              <h3 className="panel-title" style={{ margin: 0, marginBottom: '0.75rem' }}>Compiler Message</h3>
+              <div className="compiler-error-content" style={{ 
+                background: 'rgba(20, 20, 20, 0.9)', 
+                border: '1px solid rgba(230,25,75,0.3)',
+                borderRadius: '6px',
+                padding: '0.75rem',
+                fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                fontSize: '0.9rem',
+                color: '#ffffff',
+                maxHeight: '150px',
+                overflowY: 'auto',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word'
+              }}>
+                {compilerError}
+              </div>
             </div>
           )}
+
+          {/* Sample Testcase Section - Expanded to full height */}
+          <div className="panel" style={{ padding: '0.85rem 1rem', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <h3 className="panel-title" style={{ margin: 0, marginBottom: '0.75rem' }}>Sample Testcase</h3>
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {testResults.ran && testResults.details.length > 0 ? (
+                testResults.details.map((testCase, idx) => (
+                  <div key={idx} className="testcase-container" style={{
+                    background: 'rgba(30, 30, 30, 0.6)',
+                    border: '1px solid rgba(230,25,75,0.25)',
+                    borderRadius: '8px',
+                    padding: '0.75rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.5rem'
+                  }}>
+                    <div style={{
+                      padding: '0.5rem 0.75rem',
+                      background: testCase.passed ? 'rgba(41, 204, 106, 0.15)' : 'rgba(255, 77, 79, 0.15)',
+                      borderRadius: '6px',
+                      color: '#ffffff',
+                      fontWeight: 500,
+                      fontSize: '0.95rem'
+                    }}>
+                      {testCase.name} - {testCase.passed ? 'Passed' : 'Failed'}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                        <div style={{ fontWeight: 'bold', color: '#ffffff', fontSize: '0.9rem' }}>Expected Output</div>
+                        <div className="output-panel" style={{
+                          background: 'rgba(10, 10, 10, 0.8)',
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          borderRadius: '6px',
+                          padding: '0.6rem',
+                          fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                          fontSize: '0.85rem',
+                          color: '#ffffff',
+                          minHeight: '60px',
+                          maxHeight: '150px',
+                          overflowY: 'auto',
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-word'
+                        }}>
+                          {testCase.expected || '(empty)'}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                        <div style={{ fontWeight: 'bold', color: '#ffffff', fontSize: '0.9rem' }}>Output</div>
+                        <div className="output-panel" style={{
+                          background: 'rgba(10, 10, 10, 0.8)',
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          borderRadius: '6px',
+                          padding: '0.6rem',
+                          fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                          fontSize: '0.85rem',
+                          color: '#ffffff',
+                          minHeight: '60px',
+                          maxHeight: '150px',
+                          overflowY: 'auto',
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-word'
+                        }}>
+                          {testCase.actual || '(empty)'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div style={{ color: 'rgba(255,255,255,0.6)', fontStyle: 'italic', textAlign: 'center', padding: '2rem' }}>
+                  {testResults.ran ? 'No test cases to display' : 'Run your code to see test results'}
+                </div>
+              )}
+
+              {/* Hidden Test Cases */}
+              {testResults.ran && testResults.hiddenDetails && testResults.hiddenDetails.length > 0 && (
+                <div style={{ marginTop: '0.5rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                  <div style={{ fontWeight: 'bold', color: '#ffffff', marginBottom: '0.5rem', fontSize: '0.95rem' }}>
+                    Hidden Testcases
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {testResults.hiddenDetails.map((hidden, idx) => (
+                      <div key={idx} style={{
+                        padding: '0.5rem 0.75rem',
+                        background: hidden.passed ? 'rgba(41, 204, 106, 0.15)' : 'rgba(255, 77, 79, 0.15)',
+                        borderRadius: '6px',
+                        color: '#ffffff',
+                        fontSize: '0.9rem'
+                      }}>
+                        {hidden.name} - {hidden.passed ? 'Passed' : 'Failed'}
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ marginTop: '0.75rem', padding: '0.5rem', background: 'rgba(20, 20, 20, 0.5)', borderRadius: '6px', color: 'rgba(255,255,255,0.8)', fontSize: '0.85rem' }}>
+                    Hidden tests passed: {testResults.hiddenPassed} / {testResults.hiddenDetails.length}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
