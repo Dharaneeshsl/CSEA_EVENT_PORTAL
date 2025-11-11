@@ -272,9 +272,8 @@ DELETE /api/v1/roundone/questions/:type/:id
   "lang": "string (enum: python | c)",
   "buggycode": "string",
   "crctcode": "string",
-  "hint": "string",
-  "passfragment": "string",
-  "yr": 1 or 2
+  "output": "string",
+  "yr": "number"
 }
 ```
 ### API Endpoints
@@ -287,7 +286,6 @@ POST /api/v1/round2/questions/:lang
 {
   "buggycode": "def add(a,b): return a-b",
   "crctcode": "def add(a,b): return a+b",
-  "hint": "Check your operator",
   "passfragment": "add(2,3) == 5",
   "yr": 1
 }
@@ -305,8 +303,7 @@ POST /api/v1/round2/questions/:lang
     "lang": "python",
     "buggycode": "def add(a,b): return a-b",
     "crctcode": "def add(a,b): return a+b",
-    "hint": "Check your operator",
-    "passfragment": "add(2,3) == 5",
+    "output": "add(2,3) == 5",
     "yr": 1
   }
 }
@@ -345,8 +342,7 @@ GET /api/v1/round2/questions/yr
       "lang": "C",
       "buggycode": "#include<stdio.h>\nint main(){printf('Hello');}",
       "crctcode": "#include<stdio.h>\nint main(){printf(\"Hello\");}",
-      "hint": "Use correct quotation marks",
-      "passfragment": "Output == 'Hello'",
+      "output": "Output == 'Hello'",
       "yr": 1
     }
   ]
@@ -372,7 +368,6 @@ PUT /api/v1/round2/questions/:id
 
 ```json
 {
-  "hint": "Operator might be wrong",
   "crctcode": "def add(a,b): return a+b"
 }
 
@@ -389,7 +384,6 @@ PUT /api/v1/round2/questions/:id
     "lang": "python",
     "buggycode": "def add(a,b): return a-b",
     "crctcode": "def add(a,b): return a+b",
-    "hint": "Operator might be wrong",
     "passfragment": "add(2,3) == 5",
     "yr": 1
   }

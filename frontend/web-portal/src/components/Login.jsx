@@ -2,28 +2,57 @@ import React, { useState, useEffect, useRef } from 'react';
 // Try importing from assets, fallback to public folder
 import loginBgVideo from '../assets/login-bg.mp4';
 
-const codeChallenges = {
-  '1st': {
-    language: 'Python',
-    code: `def portal_code(n):
-    # Write your code here
-    return n * 2`
-  },
-  '2nd': {
-    language: 'C',
-    code: `int portal_code(int n) {
-    // Write your code here
-    return n * 2;
-}`
+// Inline minimal API client (no extra files)
+const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/$/, '');
+
+function setToken(token) {
+  try { localStorage.setItem('token', token); } catch {}
+}
+
+function decodeJwt(token) {
+  try {
+    const [, payload] = token.split('.');
+    const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+    return JSON.parse(json);
+  } catch {
+    return null;
   }
-};
+}
+
+async function apiFetch(path, { method = 'GET', headers = {}, body } = {}) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...headers,
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg = data?.message || `Request failed (${res.status})`;
+    throw new Error(msg);
+  }
+  return data;
+}
+
+async function requestOtp(email) {
+  return apiFetch('/auth/check-email', { method: 'POST', body: { email } });
+}
+
+async function verifyOtpAndStore(email, otp) {
+  const data = await apiFetch('/auth/verify-otp', { method: 'POST', body: { email, otp } });
+  if (data?.token) setToken(data.token);
+  const claims = data?.token ? decodeJwt(data.token) : null;
+  return { token: data?.token, claims, redirectPath: data?.redirectPath };
+}
 
 const Login = ({ onLogin }) => {
   const [email, setEmail] = useState('');
-  const [year, setYear] = useState('');
   const [codeSent, setCodeSent] = useState(false);
   const [codeInput, setCodeInput] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const videoRef = useRef(null);
   const codeInputRef = useRef(null);
 
@@ -41,48 +70,30 @@ const Login = ({ onLogin }) => {
         if (video.paused) {
           const playPromise = video.play();
           if (playPromise !== undefined) {
-            playPromise
-              .then(() => {
-                // Success - video is playing
-              })
-              .catch((error) => {
-                // Try again after delays
-                setTimeout(() => attemptPlay(), 300);
-                setTimeout(() => attemptPlay(), 1000);
-              });
+            playPromise.catch(() => {
+              setTimeout(() => attemptPlay(), 300);
+              setTimeout(() => attemptPlay(), 1000);
+            });
           }
         }
       };
       
-      // Try immediately
       attemptPlay();
-      
-      // Try when metadata is loaded
       const handleMetadata = () => {
         video.currentTime = 0;
         attemptPlay();
       };
       video.addEventListener('loadedmetadata', handleMetadata);
-      
-      // Try when video can play
       const handleCanPlay = () => {
-        if (video.paused) {
-          attemptPlay();
-        }
+        if (video.paused) attemptPlay();
       };
       video.addEventListener('canplay', handleCanPlay);
       video.addEventListener('canplaythrough', handleCanPlay);
-      
-      // Force play on any user interaction
       const handleInteraction = () => {
-        if (video.paused) {
-          attemptPlay();
-        }
+        if (video.paused) attemptPlay();
       };
       document.addEventListener('click', handleInteraction, { once: true });
       document.addEventListener('touchstart', handleInteraction, { once: true });
-      
-      // Cleanup
       return () => {
         video.removeEventListener('loadedmetadata', handleMetadata);
         video.removeEventListener('canplay', handleCanPlay);
@@ -91,13 +102,8 @@ const Login = ({ onLogin }) => {
     }
   }, []);
 
-  const handleEmailSubmit = (e) => {
+  const handleEmailSubmit = async (e) => {
     e.preventDefault();
-    // Blur the email input to prevent focus from moving to next input
-    e.target.querySelector('input[type="email"]')?.blur();
-    
-    // Expect emails like 24z368@psgtech.ac.in or 25abc@psgtech.ac.in
-    // Local part starts with batch prefix: 24 => 2nd year, 25 => 1st year
     setError('');
     const trimmed = email.trim().toLowerCase();
     const match = /^([0-9]{2}[a-zA-Z0-9_-]*)@([a-z0-9.-]+)$/.exec(trimmed);
@@ -105,38 +111,30 @@ const Login = ({ onLogin }) => {
       setError('Please enter a valid email (e.g. 24z368@psgtech.ac.in)');
       return;
     }
-
-    const local = match[1];
-    const domain = match[2];
-
-    if (domain !== 'psgtech.ac.in') {
+    if (match[2] !== 'psgtech.ac.in') {
       setError('Please use your PSG Tech email (e.g. 24z368@psgtech.ac.in)');
       return;
     }
 
-    if (local.startsWith('24')) {
-      setYear('2nd');
+    try {
+      setLoading(true);
+      await requestOtp(trimmed);
       setCodeSent(true);
-    } else if (local.startsWith('25')) {
-      setYear('1st');
-      setCodeSent(true);
-    } else {
-      setError('Unrecognized batch prefix in email. Example: 24z368@psgtech.ac.in (24 → 2nd year, 25 → 1st year)');
+    } catch (err) {
+      setError(err?.message || 'Failed to send OTP');
+    } finally {
+      setLoading(false);
     }
   };
 
   // Prevent auto-focus on code input when it appears
   useEffect(() => {
     if (codeSent && codeInputRef.current) {
-      // Ensure the input doesn't have focus when it first appears
-      // Blur multiple times to catch any delayed browser auto-focus
       const blurInput = () => {
         if (codeInputRef.current && document.activeElement === codeInputRef.current) {
           codeInputRef.current.blur();
         }
       };
-      
-      // Blur immediately and on next frames to catch delayed focus
       blurInput();
       setTimeout(blurInput, 0);
       setTimeout(blurInput, 10);
@@ -146,17 +144,23 @@ const Login = ({ onLogin }) => {
     }
   }, [codeSent]);
 
-  const handleCodeSubmit = (e) => {
+  const handleCodeSubmit = async (e) => {
     e.preventDefault();
-    // In a real app, verify code sent to email
-    if (codeInput === '123456') {
+    setError('');
+    try {
+      setLoading(true);
+      const { token, claims } = await verifyOtpAndStore(email.trim().toLowerCase(), codeInput.trim());
+      // Determine year from JWT claims
+      const yearNum = Number(claims?.year);
+      const yearLabel = yearNum === 1 ? '1st' : yearNum === 2 ? '2nd' : '';
       // Extract roll number from email (e.g., "24z368" from "24z368@psgtech.ac.in")
-      const trimmed = email.trim().toLowerCase();
-      const match = /^([0-9]{2}[a-zA-Z0-9_-]*)@/.exec(trimmed);
-      const rollNumber = match ? match[1].toUpperCase() : '';
-      onLogin(year, rollNumber);
-    } else {
-      setError('Invalid code. Please check your email and try again.');
+      const m = /^([0-9]{2}[a-zA-Z0-9_-]*)@/.exec(email.trim().toLowerCase());
+      const rollNumber = m ? m[1].toUpperCase() : '';
+      onLogin(yearLabel || '', rollNumber);
+    } catch (err) {
+      setError(err?.message || 'Invalid code. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -203,7 +207,6 @@ const Login = ({ onLogin }) => {
           }
         }}
         onWaiting={() => {
-          // Video buffering - ensure it plays when ready
           if (videoRef.current) {
             videoRef.current.muted = true;
           }
@@ -222,13 +225,15 @@ const Login = ({ onLogin }) => {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter the email"
+              placeholder="Enter PSG Tech email"
               className="answer-input"
               required
               autoFocus={false}
               style={{ width: '100%', maxWidth: 350, fontSize: '1.1rem', padding: '0.75rem' }}
             />
-            <button type="submit" className="submit-button" style={{ width: '100%', maxWidth: 200, fontSize: '1.2rem', padding: '0.75rem' }}>Send Code</button>
+            <button type="submit" className="submit-button" disabled={loading} style={{ width: '100%', maxWidth: 200, fontSize: '1.2rem', padding: '0.75rem' }}>
+              {loading ? 'Sending…' : 'Send OTP'}
+            </button>
           </form>
         ) : (
             <div className="code-challenge" style={{ width: '100%', maxWidth: 400, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
@@ -238,13 +243,15 @@ const Login = ({ onLogin }) => {
                   type="text"
                   value={codeInput}
                   onChange={(e) => setCodeInput(e.target.value)}
-                  placeholder="Enter code"
+                  placeholder="Enter OTP"
                   className="answer-input"
                   required
                   autoFocus={false}
                   style={{ width: '100%', maxWidth: 350, fontSize: '1.1rem', padding: '0.75rem' }}
                 />
-                <button type="submit" className="submit-button" style={{ width: '100%', maxWidth: 200, fontSize: '1.2rem', padding: '0.75rem' }}>Login</button>
+                <button type="submit" className="submit-button" disabled={loading} style={{ width: '100%', maxWidth: 200, fontSize: '1.2rem', padding: '0.75rem' }}>
+                  {loading ? 'Verifying…' : 'Login'}
+                </button>
               </form>
             </div>
         )}

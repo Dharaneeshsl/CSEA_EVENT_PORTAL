@@ -30,3 +30,14 @@ node_modules/
 
 frontend/node_modules/
 frontend/web-portal/node_modules/
+
+# Env files (do not commit secrets)
+.env
+.env.*
+backend/.env
+backend/.env.*
+frontend/.env
+frontend/.env.*
+
+# Accidental root-level frontend lockfile (actual lockfile lives under web-portal)
+frontend/package-lock.json

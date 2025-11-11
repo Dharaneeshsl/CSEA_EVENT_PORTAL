@@ -18,13 +18,20 @@ export const checkEmail = async (req, res) => {
 
     const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
-      return res.status(404).json({ message: 'Email not found in registration records' });
+      // Do not reveal whether the email exists; return generic success to prevent enumeration
+      return res.status(200).json({ message: 'If the email is registered, an OTP has been sent.' });
     }
 
     const otp = generateOtp();
     user.otp = otp;
     user.otpExpiry = new Date(Date.now() + OTP_TTL_MS);
-    await user.save();
+    try {
+      await user.save();
+    } catch (saveErr) {
+      console.error('OTP save failed:', saveErr?.message || saveErr);
+      // Still return generic success (client UX), user can retry.
+      return res.status(200).json({ message: 'If the email is registered, an OTP has been sent.' });
+    }
 
     const html = `
       <div style="font-family:Arial,sans-serif">
@@ -36,14 +43,20 @@ export const checkEmail = async (req, res) => {
       </div>
     `;
 
-    await sendEmail({
-      to: user.email,
-      subject: 'Your OTP for Stranger Things Portal',
-      text: `Your OTP is ${otp}. It is valid for 5 minutes.`,
-      html
-    });
-
-    return res.status(200).json({ message: 'OTP sent to email' });
+    // Try to send email, but don't fail the whole request if mail transport has a hiccup.
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: 'Your OTP for Stranger Things Portal',
+        text: `Your OTP is ${otp}. It is valid for 5 minutes.`,
+        html
+      });
+      return res.status(200).json({ message: 'OTP sent to email' });
+    } catch (mailErr) {
+      console.error('sendEmail failed:', mailErr?.message || mailErr);
+      // Still return success since OTP is generated and saved; user can request again if needed.
+      return res.status(200).json({ message: 'OTP generated. Email delivery attempt made.' });
+    }
   } catch (err) {
     console.error('checkEmail error:', err);
     return res.status(500).json({ message: 'Internal server error' });
