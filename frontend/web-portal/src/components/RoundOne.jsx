@@ -6,6 +6,10 @@ const RoundOne = ({ onComplete }) => {
   const [diceValue, setDiceValue] = useState(1);
   const [isDiceRolling, setIsDiceRolling] = useState(false);
   const [showDicePopup, setShowDicePopup] = useState(true); // Always visible by default
+  const [previewCardId, setPreviewCardId] = useState(null); // Intermediate preview before full question
+  const [previewFromRect, setPreviewFromRect] = useState(null);
+  const [previewTargetPos, setPreviewTargetPos] = useState(null);
+  const [previewAnimActive, setPreviewAnimActive] = useState(false);
   const [expandedCard, setExpandedCard] = useState(null);
   const [answer, setAnswer] = useState('');
   const [error, setError] = useState('');
@@ -22,6 +26,7 @@ const RoundOne = ({ onComplete }) => {
   const overlayRef = useRef(null);
   const videoRef = useRef(null);
   const rewardVideoRef = useRef(null);
+  const cardRefs = useRef({});
 
 
   // Function to get dice transform based on value
@@ -157,13 +162,29 @@ const RoundOne = ({ onComplete }) => {
       setDiceValue(finalValue);
       setIsDiceRolling(false);
       
-      // After roll, expand the corresponding card quickly
+      // After roll, show a centered preview first, then allow tap to continue
       setTimeout(() => {
         setShowDicePopup(false);
         setTimeout(() => {
-          setExpandedCard(finalValue);
-        }, 300);
-      }, 300);
+          const el = cardRefs.current[finalValue];
+          if (el) {
+            const rect = el.getBoundingClientRect();
+            const targetLeft = (window.innerWidth - rect.width) / 2;
+            const targetTop = (window.innerHeight - rect.height) / 2;
+            setPreviewFromRect({
+              left: rect.left,
+              top: rect.top,
+              width: rect.width,
+              height: rect.height
+            });
+            setPreviewTargetPos({ left: targetLeft, top: targetTop });
+          } else {
+            setPreviewFromRect(null);
+            setPreviewTargetPos(null);
+          }
+          setPreviewCardId(finalValue);
+        }, 200);
+      }, 200);
     }, rollDuration);
   };
 
@@ -206,6 +227,19 @@ const RoundOne = ({ onComplete }) => {
   };
 
   const currentChallenge = expandedCard ? tasks[expandedCard - 1] : null;
+  const previewChallenge = previewCardId ? tasks[previewCardId - 1] : null;
+
+  // Trigger the fly-to-center animation after preview mounts
+  useEffect(() => {
+    if (previewCardId && previewFromRect && previewTargetPos) {
+      setPreviewAnimActive(false);
+      const rAF = requestAnimationFrame(() => {
+        setPreviewAnimActive(true);
+      });
+      return () => cancelAnimationFrame(rAF);
+    }
+    return undefined;
+  }, [previewCardId, previewFromRect, previewTargetPos]);
 
   // Ensure background video plays WITH audio when question page opens
   useEffect(() => {
@@ -617,11 +651,13 @@ const RoundOne = ({ onComplete }) => {
           <h2 className="round-title">Round 1 - Dungeons and Dragons</h2>
 
           {/* Six Challenge Cards Grid */}
-          <div className="challenge-cards-grid">
+          <div className={`challenge-cards-grid ${previewCardId ? 'cards-hidden' : ''}`}>
             {tasks.map((task) => (
               <div 
                 key={task.id} 
                 className="challenge-card-number"
+                ref={(el) => { cardRefs.current[task.id] = el; }}
+                style={previewCardId === task.id ? { visibility: 'hidden' } : undefined}
               >
                 <div className="card-front">
                   <div className="card-number">{task.id}</div>
@@ -696,6 +732,52 @@ const RoundOne = ({ onComplete }) => {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* Result Preview - fly from card position to center at same size; tap to continue below */}
+          {previewCardId && previewChallenge && previewFromRect && previewTargetPos && (
+            <>
+              <div className="result-preview-scrim" />
+              <div
+                className={`result-preview-flycard ${previewAnimActive ? 'active' : ''}`}
+                style={{
+                  position: 'fixed',
+                  left: previewFromRect.left,
+                  top: previewFromRect.top,
+                  width: previewFromRect.width,
+                  height: previewFromRect.height,
+                  transform: previewAnimActive
+                    ? `translate(${previewTargetPos.left - previewFromRect.left}px, ${previewTargetPos.top - previewFromRect.top}px)`
+                    : 'translate(0px, 0px)',
+                }}
+              >
+                <div className="result-preview-card-inner">
+                  <div className="result-preview-header">
+                    <div className="result-preview-number">{previewChallenge.id}</div>
+                    <div className="result-preview-title">{previewChallenge.title}</div>
+                  </div>
+                </div>
+              </div>
+              <button
+                className={`tap-to-continue ${previewAnimActive ? 'visible' : ''}`}
+                style={{
+                  position: 'fixed',
+                  left: Math.round(previewTargetPos.left + previewFromRect.width / 2),
+                  top: Math.round(previewTargetPos.top + previewFromRect.height + 16),
+                  transform: 'translateX(-50%)',
+                }}
+                onClick={() => {
+                  const id = previewCardId;
+                  setPreviewCardId(null);
+                  setPreviewFromRect(null);
+                  setPreviewTargetPos(null);
+                  setPreviewAnimActive(false);
+                  setTimeout(() => setExpandedCard(id), 120);
+                }}
+              >
+                Tap to continue
+              </button>
+            </>
           )}
         </div>
       )}

@@ -608,6 +608,105 @@ h1, h2, h3, h4, h5, h6, .portal-title, .current-round-label, .round-title, .chal
   transform: none !important;
 }
 
+/* Result Preview (post-dice, pre-question) - Fly the card from its position */
+.result-preview-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.75) 55%, rgba(0,0,0,0.9) 100%);
+  pointer-events: none;
+}
+.result-preview-flycard {
+  z-index: 1500;
+  transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+  pointer-events: none;
+}
+.result-preview-card-inner {
+  width: 100%;
+  height: 100%;
+  /* Match the grid card (.card-front) theme exactly */
+  background: linear-gradient(135deg, rgba(230,25,75,0.15), rgba(50,6,74,0.2));
+  border: 3px solid rgba(230,25,75,0.4);
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  box-shadow: 0 8px 32px rgba(230,25,75,0.2);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.result-preview-header {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.2rem;
+}
+.result-preview-number {
+  /* Match .card-number */
+  font-size: 3.9rem; /* slightly bigger */
+  font-weight: 900;
+  color: var(--primary-color);
+  text-shadow: 0 0 20px rgba(230,25,75,0.6);
+  line-height: 1;
+  margin-top: 0.3rem;
+}
+.result-preview-title {
+  /* Match .card-title-small */
+  font-size: 1.05rem; /* slightly bigger */
+  color: rgba(255,255,255,0.9);
+  font-weight: 600;
+  text-align: center;
+  padding: 0 0.8rem;
+  line-height: 1.3;
+  margin-top: 0.35rem;
+}
+.result-preview-body {
+  /* Keep transparent so the card theme dominates */
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  width: 100%;
+  text-align: center;
+}
+
+.tap-to-continue {
+  margin-top: 0.3rem;
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.72); /* low-contrast white */
+  font-family: 'Cinzel', serif; /* same font */
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 0.75rem 1rem;
+  transition: transform 160ms ease, color 160ms ease;
+  text-shadow: none;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tap-to-continue:hover {
+  transform: translateY(-1px);
+  color: rgba(255,255,255,0.82);
+}
+
+.tap-to-continue:active {
+  transform: translateY(0);
+}
+
+.tap-to-continue.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transition: opacity 180ms ease;
+}
+
 @keyframes heroExpand {
   0% {
     opacity: 0;
