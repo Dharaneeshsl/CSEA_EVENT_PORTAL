@@ -106,6 +106,7 @@ POST /api/v1/roundone/questions/steg
   "ans": "SECRET",
   "type": "steg",
   "yr": 2
+  "url":"image url"
 }
 
 
