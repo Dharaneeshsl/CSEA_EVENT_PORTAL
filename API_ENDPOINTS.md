@@ -45,7 +45,8 @@ Base url: /api/v1/roundone/questions
   "descp": "string",
   "ans": "string",
   "type": "steg",
-  "yr": 1 or 2
+  "yr": 1 or 2,
+  "url":"string"
 }
 ```
 ### Crossword - to be updated
