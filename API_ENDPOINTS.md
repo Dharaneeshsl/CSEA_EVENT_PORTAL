@@ -122,7 +122,8 @@ POST /api/v1/roundone/questions/steg
     "descp": "Find the hidden text in the image.",
     "ans": "SECRET",
     "type": "steg",
-    "yr": 2
+    "yr": 2,
+    "url":"image url"
   }
 }
 
