@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-const qnsans= new mangoose.schema({
+const qnsans=new mongoose.Schema({
     title:{type: String ,required:true,trim:true},
     descp:{type: String ,required:true,trim:true},
     qn:{type: String ,required:true,trim:true},

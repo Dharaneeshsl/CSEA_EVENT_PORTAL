@@ -1,6 +1,7 @@
-import Questions from "../models/roundonemodels.js"
+import Questions from "../models/roundonemodel.js"
 import steg from "../models/stegmodels.js"
-const addqn=async(req,res)=>{
+
+export const addqn=async(req,res)=>{
     try{
         const {title,descp,qn,ans,type,yr}=req.body;
         if (!title || !descp || !qn || !ans || !type || !yr) {
@@ -41,7 +42,7 @@ const addqn=async(req,res)=>{
         });
     }
 };
-const stegqnadd=async(req,res)=>{
+export const stegqnadd=async(req,res)=>{
     try{
         const {title,descp,qn,ans,type,yr,url}=req.body;
         if (!title || !descp || !qn || !ans || !type || !yr || !url) {
@@ -74,7 +75,7 @@ const stegqnadd=async(req,res)=>{
         })
     }
 }
-const getstegqnbyyear=async(req,res)=>{
+export const getstegqnbyyear=async(req,res)=>{
     try{
         const {yr}=req.query;
 
@@ -106,39 +107,52 @@ const getstegqnbyyear=async(req,res)=>{
         });
     }
 }
-const getallquestion=async(req,res)=>{
-    try{
-        const {yr}=req.query;
-
-        
-        if(!yr){
+// ...existing code...
+export const getallquestion = async (req, res) => {
+    try {
+        const { yr } = req.query;
+        if (!yr) {
             return res.status(400).json({
-                "success":false,
-                "message":"Please provide a year",
+                success: false,
+                message: "Please provide a year",
             });
         }
-        const filter={yr:yr};
-        const questions=await Questions.find(filter);
-        if(questions.length==0){
+
+        const parsedYr = Number(yr);
+        const filter = Number.isNaN(parsedYr) ? { yr } : { yr: parsedYr };
+
+        const [questions, stegQuestions] = await Promise.all([
+            Questions.find(filter),
+            steg.find(filter)
+        ]);
+
+        const combined = [
+            ...questions.map(q => ({ ...q.toObject(), source: 'roundone' })),
+            ...stegQuestions.map(s => ({ ...s.toObject(), source: 'steg' }))
+        ];
+
+        if (combined.length === 0) {
             return res.status(404).json({
-                "success":false,
-                "message":"No question given for the provided year"
-            })
+                success: false,
+                message: "No question given for the provided year"
+            });
         }
+
         res.status(200).json({
-            "success":true,
-            "count":questions.length,
-            "data":questions,
+            success: true,
+            count: combined.length,
+            counts: { roundone: questions.length, steg: stegQuestions.length },
+            data: combined,
         });
-    }
-    catch(error){
+    } catch (error) {
         res.status(500).json({
-            "success": false,
-            "message":"internal server error"
+            success: false,
+            message: "internal server error"
         });
     }
 }
-const getqnbyId=async(req,res)=>{
+// ...existing code...
+export const getqnbyId=async(req,res)=>{
     try{
         const filter={};
         
@@ -162,12 +176,12 @@ const getqnbyId=async(req,res)=>{
         });
     }
 }
-const updateqn=async(req,res)=>{
+export const updateqn =async(req,res)=>{
     try{
         const {id}=req.params;
         const {title,descp,qn,ans,type,yr}=req.body;
         const existingqn=await Questions.findOne({
-            $or:[{title},{qn}]
+            $or:[{title},{qn}], _id: { $ne: id }
         });
         if(existingqn){
             return res.status(409).json({
@@ -189,4 +203,43 @@ const updateqn=async(req,res)=>{
         res.status(500).json({success:false,message:error.message});
     }
 }
-module.exports={addqn,getallquestion,getqnbyId,updateqn,getstegqnbyyear,stegqnadd};
+
+// ...existing code...
+// ...existing code...
+import mongoose from "mongoose";
+// ...existing code...
+
+export const deleteqn = async (req, res) => {
+    try {
+        let { id } = req.params;
+        if (!id) return res.status(400).json({ success: false, message: "Missing id param" });
+
+        id = id.trim();
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ success: false, message: "Invalid id format" });
+        }
+
+        // Try roundone collection first
+        const existing = await Questions.findById(id);
+        if (existing) {
+            const deleted = await Questions.findByIdAndDelete(id);
+            return res.status(200).json({ success: true, message: "Question deleted from roundone", data: deleted });
+        }
+
+        // Try steg collection next
+        const existingSteg = await steg.findById(id);
+        if (existingSteg) {
+            const deleted = await steg.findByIdAndDelete(id);
+            return res.status(200).json({ success: true, message: "Question deleted from steg", data: deleted });
+        }
+
+        return res.status(404).json({ success: false, message: "Question not found in roundone or steg" });
+    } catch (error) {
+        console.error("deleteqn error:", error);
+        if (error.name === 'CastError') {
+            return res.status(400).json({ success: false, message: "Invalid id format" });
+        }
+        return res.status(500).json({ success: false, message: "internal server error" });
+    }
+}
+// ...existing code...
