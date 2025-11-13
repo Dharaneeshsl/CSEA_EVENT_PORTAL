@@ -7,6 +7,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
+import roundoneRoutes from './routes/roundoneRoutes.js';
 import round3Routes from './routes/round3Routes.js';
 import { verifyToken, onlyFirstYears, onlySecondYears } from './middleware/authMiddleware.js';
 
@@ -27,6 +28,7 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/v1/roundone', roundoneRoutes);
 app.use('/api/v1/round3', round3Routes);
 
 app.get('/api/portal/year1', verifyToken, onlyFirstYears, (req, res) => {
