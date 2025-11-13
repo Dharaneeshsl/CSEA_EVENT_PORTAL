@@ -1,15 +1,29 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import strangerIntroVideo from '../assets/stranger-intro.mp4';
+import logo from '../assets/logo.png';
 import './VideoIntro.css';
 
 const VideoIntro = ({ onComplete, onFadeInLogin }) => {
   const [hasInteracted, setHasInteracted] = useState(false);
   const [videoHidden, setVideoHidden] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
+  const [thanksPhase, setThanksPhase] = useState('idle'); // idle → delay → visible → hiding → delay2 → visible2 → hiding2 → delay3 → visible3 → hiding3 → done
+  const [thanksScreen, setThanksScreen] = useState(1); // 1 = PSG, 2 = CSEA, 3 = Secretaries
   const videoRef = useRef(null);
   const audioRef = useRef(null);
   const videoDurationRef = useRef(0);
   const loginFadeStartedRef = useRef(false);
+  const thanksTimersRef = useRef([]);
+
+  const clearThanksTimers = useCallback(() => {
+    thanksTimersRef.current.forEach(clearTimeout);
+    thanksTimersRef.current = [];
+  }, []);
+
+  const scheduleThanksTransition = useCallback((nextPhase, delay) => {
+    const timer = setTimeout(() => setThanksPhase(nextPhase), delay);
+    thanksTimersRef.current.push(timer);
+  }, []);
 
   // Handle user interaction (touch or click)
   const handleInteraction = async () => {
@@ -33,15 +47,20 @@ const VideoIntro = ({ onComplete, onFadeInLogin }) => {
         // Continue even if fullscreen fails
       }
       
-      // Hide cursor
-      document.body.style.cursor = 'none';
+      // Keep cursor visible during thanks screen
+      document.body.style.cursor = '';
+      setThanksScreen(1);
+      setThanksPhase('delay');
+      clearThanksTimers();
       
-      // Play both video and audio when user interacts
+      // Reset media to start position and pause until thanks screen completes
       if (videoRef.current) {
-        videoRef.current.play().catch(err => console.error('Video play error:', err));
+        videoRef.current.pause();
+        videoRef.current.currentTime = 0;
       }
       if (audioRef.current) {
-        audioRef.current.play().catch(err => console.error('Audio play error:', err));
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
       }
     }
   };
@@ -281,6 +300,7 @@ const VideoIntro = ({ onComplete, onFadeInLogin }) => {
   // Cleanup: stop all audio/video and restore cursor when component unmounts
   useEffect(() => {
     return () => {
+      clearThanksTimers();
       // Stop and clean up audio
       if (audioRef.current) {
         const audio = audioRef.current;
@@ -322,16 +342,63 @@ const VideoIntro = ({ onComplete, onFadeInLogin }) => {
     };
   }, []);
 
+  useEffect(() => {
+    if (thanksPhase === 'delay') {
+      clearThanksTimers();
+      scheduleThanksTransition('visible', 2000);
+    } else if (thanksPhase === 'visible') {
+      clearThanksTimers();
+      scheduleThanksTransition('hiding', 3000);
+    } else if (thanksPhase === 'hiding') {
+      clearThanksTimers();
+      scheduleThanksTransition('delay2', 800);
+    } else if (thanksPhase === 'delay2') {
+      clearThanksTimers();
+      setThanksScreen(2);
+      scheduleThanksTransition('visible2', 1500);
+    } else if (thanksPhase === 'visible2') {
+      clearThanksTimers();
+      scheduleThanksTransition('hiding2', 3000);
+    } else if (thanksPhase === 'hiding2') {
+      clearThanksTimers();
+      scheduleThanksTransition('delay3', 800);
+    } else if (thanksPhase === 'delay3') {
+      clearThanksTimers();
+      setThanksScreen(3);
+      scheduleThanksTransition('visible3', 1500);
+    } else if (thanksPhase === 'visible3') {
+      clearThanksTimers();
+      scheduleThanksTransition('hiding3', 3000);
+    } else if (thanksPhase === 'hiding3') {
+      clearThanksTimers();
+      scheduleThanksTransition('done', 800);
+    } else if (thanksPhase === 'done') {
+      clearThanksTimers();
+      document.body.style.cursor = 'none';
+      if (videoRef.current) {
+        videoRef.current.play().catch(err => console.error('Video play error:', err));
+      }
+      if (audioRef.current) {
+        audioRef.current.currentTime = 0;
+        audioRef.current.play().catch(err => console.error('Audio play error:', err));
+      }
+    }
+  }, [thanksPhase, clearThanksTimers, scheduleThanksTransition]);
+
   if (isComplete) {
     return null;
   }
 
+  const showThanks = thanksPhase !== 'idle' && thanksPhase !== 'done' && thanksPhase !== 'delay2' && thanksPhase !== 'delay3';
+  const isVisible = thanksPhase === 'visible' || thanksPhase === 'visible2' || thanksPhase === 'visible3';
+  const isHiding = thanksPhase === 'hiding' || thanksPhase === 'hiding2' || thanksPhase === 'hiding3';
+
   return (
     <div 
-      className={`video-intro-container ${videoHidden ? 'video-hidden' : ''}`}
+      className={`video-intro-container ${videoHidden ? 'video-hidden' : ''} ${showThanks ? 'showing-thanks' : ''} thanks-phase-${thanksPhase}`}
       onClick={handleInteraction}
       onTouchStart={handleInteraction}
-      style={{ cursor: hasInteracted ? 'none' : 'pointer' }}
+      style={{ cursor: !hasInteracted ? 'pointer' : showThanks ? 'default' : 'none' }}
     >
       {/* Video element - muted, for visual only */}
       <video
@@ -381,6 +448,33 @@ const VideoIntro = ({ onComplete, onFadeInLogin }) => {
           }}
         >
           Tap to start
+        </div>
+      )}
+
+      {showThanks && (
+        <div
+          className={`thanks-overlay ${isVisible ? 'visible' : ''} ${isHiding ? 'hiding' : ''}`}
+        >
+          <div className="thanks-content">
+            <span className="thanks-title">Thanks to</span>
+            <div className="thanks-divider-line"></div>
+            {thanksScreen === 1 ? (
+              <div className="thanks-sponsor thanks-sponsor-psg">
+                <img src={logo} alt="PSG College of Technology logo" className="thanks-logo" />
+                <span className="thanks-sponsor-name">PSG College of Technology</span>
+              </div>
+            ) : thanksScreen === 2 ? (
+              <div className="thanks-sponsor thanks-sponsor-csea">
+                <span className="thanks-sponsor-name">Computer Science and Engineering Association</span>
+              </div>
+            ) : (
+              <div className="thanks-secretaries">
+                <div className="thanks-secretary-item">Secretary - Arulkumara B R</div>
+                <div className="thanks-secretary-item">Joint Secretary - Sanjay Jayakumar</div>
+                <div className="thanks-secretary-item">Joint Secretary - Delicia Angeline</div>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

@@ -35,8 +35,161 @@ body:has(.video-intro-container:not(.video-hidden)) {
   pointer-events: none;
 }
 
+.video-intro-container.showing-thanks .intro-video {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.video-intro-container.showing-thanks {
+  cursor: default !important;
+}
+
 .intro-instruction {
   animation: pulse 2s ease-in-out infinite;
+}
+
+.thanks-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.92);
+  opacity: 0;
+  transform: scale(0.985);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.thanks-overlay.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.thanks-overlay.hiding {
+  opacity: 0;
+  transform: scale(0.97);
+}
+
+.thanks-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  color: #ffffff;
+  width: min(700px, 90vw);
+  max-width: 100%;
+  text-align: center;
+  text-shadow: 0 0 12px rgba(0, 0, 0, 0.85);
+  letter-spacing: 0.08em;
+  opacity: 0;
+  animation: thanksContentFadeIn 0.8s ease forwards;
+}
+
+.thanks-overlay.visible .thanks-content {
+  animation: thanksContentFadeIn 0.8s ease forwards;
+}
+
+.thanks-overlay.hiding .thanks-content {
+  animation: thanksContentFadeOut 0.8s ease forwards;
+}
+
+.thanks-title {
+  font-size: clamp(0.85rem, 1.5vw, 1.3rem);
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: #ffffff;
+  text-align: center;
+  text-shadow:
+    0 0 18px rgba(0, 0, 0, 0.85),
+    0 0 6px rgba(255, 255, 255, 0.3);
+}
+
+.thanks-divider-line {
+  width: 100%;
+  max-width: 400px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.55);
+  margin: 0.5rem 0;
+}
+
+.thanks-sponsor {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  width: 100%;
+  max-width: 100%;
+  font-size: clamp(0.75rem, 1.3vw, 1.2rem);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+  text-align: center;
+}
+
+.thanks-sponsor-psg {
+  justify-content: center;
+}
+
+.thanks-sponsor-csea {
+  justify-content: center;
+}
+
+.thanks-logo {
+  width: clamp(40px, 5vw, 60px);
+  height: auto;
+  filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.7));
+  flex-shrink: 0;
+}
+
+.thanks-sponsor-name {
+  text-shadow:
+    0 0 18px rgba(0, 0, 0, 0.85),
+    0 0 8px rgba(255, 255, 255, 0.35);
+  word-break: break-word;
+  hyphens: auto;
+  text-align: center;
+}
+
+.thanks-sponsor-psg .thanks-sponsor-name {
+  white-space: nowrap;
+}
+
+.thanks-csea {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.thanks-secretaries {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  text-align: center;
+}
+
+.thanks-secretary-item {
+  font-size: clamp(0.65rem, 1.2vw, 0.95rem);
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow:
+    0 0 12px rgba(0, 0, 0, 0.85),
+    0 0 6px rgba(255, 255, 255, 0.25);
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+  text-align: center;
 }
 
 @keyframes pulse {
@@ -47,6 +200,24 @@ body:has(.video-intro-container:not(.video-hidden)) {
   50% {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1.05);
+  }
+}
+
+@keyframes thanksContentFadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes thanksContentFadeOut {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
   }
 }
 
