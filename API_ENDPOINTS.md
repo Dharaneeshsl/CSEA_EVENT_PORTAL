@@ -45,7 +45,8 @@ Base url: /api/v1/roundone/questions
   "descp": "string",
   "ans": "string",
   "type": "steg",
-  "yr": 1 or 2
+  "yr": 1 or 2,
+  "url":"string"
 }
 ```
 ### Crossword - to be updated
@@ -105,6 +106,7 @@ POST /api/v1/roundone/questions/steg
   "ans": "SECRET",
   "type": "steg",
   "yr": 2
+  "url":"image url"
 }
 
 
@@ -120,7 +122,8 @@ POST /api/v1/roundone/questions/steg
     "descp": "Find the hidden text in the image.",
     "ans": "SECRET",
     "type": "steg",
-    "yr": 2
+    "yr": 2,
+    "url":"image url"
   }
 }
 
