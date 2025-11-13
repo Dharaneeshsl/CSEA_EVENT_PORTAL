@@ -225,14 +225,14 @@ const Login = ({ onLogin }) => {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter PSG Tech email"
+              placeholder="Enter the email"
               className="answer-input"
               required
               autoFocus={false}
               style={{ width: '100%', maxWidth: 350, fontSize: '1.1rem', padding: '0.75rem' }}
             />
             <button type="submit" className="submit-button" disabled={loading} style={{ width: '100%', maxWidth: 200, fontSize: '1.2rem', padding: '0.75rem' }}>
-              {loading ? 'Sending…' : 'Send OTP'}
+              {loading ? 'Sending…' : 'Send Code'}
             </button>
           </form>
         ) : (

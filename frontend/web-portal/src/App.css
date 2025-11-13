@@ -360,7 +360,7 @@ h1, h2, h3, h4, h5, h6, .portal-title, .current-round-label, .round-title, .chal
   text-align: center;
   /* Make footer visually minimal so the page background shows through.
      Use a subtle black gradient to improve text legibility over the image. */
-  background: linear-gradient(to top, rgba(0,0,0,0.80), rgba(0,0,0,0.02));
+  background: linear-gradient(to top, rgba(0,0,0,0.95), rgba(0,0,0,0.40), rgba(0,0,0,0.05));
   color: #ffffff; /* white text for contrast */
   padding: 0.9rem 0;
   z-index: 50;
