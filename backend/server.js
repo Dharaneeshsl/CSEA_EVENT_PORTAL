@@ -34,7 +34,7 @@ app.use('/api/v1/round2', round2Routes);
 app.use('/api/v1/round3', round3Routes);
 
 
-app.get('/api/poratal/year1', verifyToken, onlyFirstYears, (req, res) => {
+app.get('/api/portal/year1', verifyToken, onlyFirstYears, (req, res) => {
   res.status(200).json({ message: 'Welcome, First Year!', user: req.user });
 });
 
