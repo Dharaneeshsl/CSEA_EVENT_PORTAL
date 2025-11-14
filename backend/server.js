@@ -29,7 +29,8 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/v1/round3', round3Routes);
 
-app.get('/api/portal/year1', verifyToken, onlyFirstYears, (req, res) => {
+
+app.get('/api/poratal/year1', verifyToken, onlyFirstYears, (req, res) => {
   res.status(200).json({ message: 'Welcome, First Year!', user: req.user });
 });
 

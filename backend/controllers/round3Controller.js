@@ -1,4 +1,6 @@
 import Round3Answer from '../models/Round3Answer.js';
+import Round3Player from '../models/Round3Player.js';
+
 
 // 🟢 Create (POST)
 export const createAnswer = async (req, res) => {
@@ -93,4 +95,45 @@ export const deleteAnswer = async (req, res) => {
   }
 };
 
+// 🟣 Player Submit Answer (POST)
+export const submitPlayerAnswer = async (req, res) => {
+  try {
+    const { year, answer } = req.body;
 
+    if (!year || !answer) {
+      return res.status(400).json({
+        success: false,
+        message: "Year and answer are required"
+      });
+    }
+
+    // get correct answers for this year
+    const correct = await Round3Answer.findOne({ yr: year });
+
+    if (!correct) {
+      return res.status(404).json({
+        success: false,
+        message: "No answer key found for this year"
+      });
+    }
+
+    // normalize
+    const playerAns = answer.trim().toLowerCase();
+    const correctAns = correct.answer.map(a =>
+      a.trim().toLowerCase()
+    );
+
+    // check
+    const isCorrect = correctAns.includes(playerAns);
+
+    res.status(200).json({
+      success: true,
+      isCorrect,
+      message: isCorrect ? "Correct answer" : "Wrong answer"
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
