@@ -4,7 +4,8 @@ import {
   getAllAnswers,
   getAnswer,
   updateAnswer,
-  deleteAnswer
+  deleteAnswer,
+  submitPlayerAnswer
 } from '../controllers/round3Controller.js';
 
 const router = express.Router();
@@ -21,5 +22,9 @@ router.put('/answers/:year', updateAnswer);
 
 // DELETE /api/v1/round3/answers/:year
 router.delete('/answers/:year', deleteAnswer);
+
+// PLAYER submits answer (must use verifyToken in main server)
+router.post('/submit', submitPlayerAnswer);
+
 
 export default router;
