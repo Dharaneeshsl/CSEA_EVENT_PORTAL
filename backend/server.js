@@ -29,7 +29,7 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
-app.use('/api/v1/roundone', roundoneRoutes);
+app.use('/api/v1/round1', roundoneRoutes);
 app.use('/api/v1/round2', round2Routes);
 app.use('/api/v1/round3', round3Routes);
 
