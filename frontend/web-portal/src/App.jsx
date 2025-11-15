@@ -142,7 +142,7 @@ function App() {
         {(() => {
           switch (currentRound) {
             case 1:
-              return <RoundOne onComplete={() => {
+              return <RoundOne year={loggedInYear}  onComplete={() => {
                 setCurrentRound(2);
                 // Round One completion is saved automatically via the useEffect above
               }} />;

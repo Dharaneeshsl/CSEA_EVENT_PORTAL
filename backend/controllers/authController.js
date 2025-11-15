@@ -17,6 +17,8 @@ export const checkEmail = async (req, res) => {
     const normalizedEmail = String(email).toLowerCase().trim();
 
     const user = await User.findOne({ email: normalizedEmail });
+    console.log(user)
+    
     if (!user) {
       // Do not reveal whether the email exists; return generic success to prevent enumeration
       return res.status(200).json({ message: 'If the email is registered, an OTP has been sent.' });
@@ -107,7 +109,8 @@ export const verifyOtp = async (req, res) => {
     return res.status(200).json({
       message: 'Authentication successful',
       token,
-      redirectPath
+      redirectPath,
+      user
     });
   } catch (err) {
     console.error('verifyOtp error:', err);

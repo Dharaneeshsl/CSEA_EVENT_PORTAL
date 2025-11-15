@@ -110,7 +110,7 @@ export const getstegqnbyyear=async(req,res)=>{
 // ...existing code...
 export const getallquestion = async (req, res) => {
     try {
-        const { yr } = req.query;
+        const { yr } = req.params;
         if (!yr) {
             return res.status(400).json({
                 success: false,
