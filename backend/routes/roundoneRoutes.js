@@ -1,5 +1,5 @@
 import {Router} from "express";
-import authmiddleware from "../authMiddleware.js";
+import authmiddleware from "../middleware/authMiddleware.js";
 import{addqn,getallquestion,getqnbyId,updateqn,getstegqnbyyear,stegqnadd,deleteqn} from "../controllers/roundoneController.js"
 import { submitAnswer, submitStegAnswer, getAnsweredQuestions, getPlayerScore } from "../controllers/playerController.js";
 

@@ -13,6 +13,10 @@ export const submitAnswer = async (req, res) => {
       });
     }
 
+    if (!mongoose.Types.ObjectId.isValid(questionId)) {
+      return res.status(400).json({ success: false, message: "Invalid questionId" });
+    }
+
     const question = await Questions.findById(questionId);
     if (!question) {
       return res.status(404).json({
@@ -21,7 +25,7 @@ export const submitAnswer = async (req, res) => {
       });
     }
 
-    if (question.yr !== year) {
+    if (question.yr != null && year != null && Number(question.yr) !== Number(year)) {
       return res.status(403).json({
         success: false,
         message: "You can only answer questions for your year"
@@ -37,7 +41,7 @@ export const submitAnswer = async (req, res) => {
 
    
     let playerAnswer = await PlayerAnswers.findOne({
-      name,
+      email,
       questionId,
       round: 'roundone'
     });
@@ -198,6 +202,8 @@ export const submitStegAnswer = async (req, res) => {
       });
     }
 
+    if (!mongoose.Types.ObjectId.isValid(questionId)) return res.status(400).json({ success: false, message: "Invalid questionId" });
+
     const question = await steg.findById(questionId);
     if (!question) {
       return res.status(404).json({
@@ -206,7 +212,7 @@ export const submitStegAnswer = async (req, res) => {
       });
     }
 
-    if (question.yr !== year) {
+    if (Number(question.yr) !== Number(year)) {
       return res.status(403).json({
         success: false,
         message: "You can only answer questions for your year"

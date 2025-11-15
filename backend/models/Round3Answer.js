@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 const round3AnswerSchema = new mongoose.Schema({
   answer: {
-    type: [String], // array of strings like ["ABCD", "1234"]
+    type: String, // array of strings like ["ABCD", "1234"]
     required: true,
   },
   yr: {
